@@ -19,7 +19,7 @@ module AdyenRouter
         headers['WWW-Authenticate'] = 'Basic realm="Restricted Area"'
         halt 401, "Not authorized\n"
     end
-    
+
     def authorized?
       @auth ||=  Rack::Auth::Basic::Request.new(request.env)
       @auth.provided? and @auth.basic? and @auth.credentials and @auth.credentials == [ENV['USER'], ENV['PASSWORD']]
@@ -33,12 +33,12 @@ module AdyenRouter
     html += "<h2> Published Machines </h2>"
     html += "<ol>"
     @@machines.each do |m|
-      html += "<li>name: #{m.name}<br>host: #{m.host}<br>port: #{m.port}<br></li>"
+      html += "<li>name: #{m.name}<br>host: #{m.host}<br>port: #{m.port}<br> post_path: #{m.post_path} <br></li>"
     end
     html += "</ol>"
     erb html
   end
-  
+
   post '/publish' do
     machine = AdyenRouter::Machine.new *::Base64::decode64(params[:machine]).split("|")
     if @@machines.detect { |published_machine| published_machine.name.eql?(machine.name)}
@@ -55,14 +55,14 @@ module AdyenRouter
     [200, {},"AdyenRouter: Yay! Notifications for #{machine.name} will be forward to #{machine.host}:#{machine.port}\n"]
   end
 
-  post '/adyen/post_back' do
-  
+  post '/' do
+
     protected!
 
     machine = fetch_machine(params[:merchantReference].scan(/[dev|test]-(.*)::/).flatten.first.to_s)
 
     puts machine.inspect
-    uri = URI("http://#{machine.host}:#{machine.port}/adyen/post_back")
+    uri = URI("http://#{machine.host}:#{machine.port}/#{machine.post_path}")
 
     post_back_proxy = ::Net::HTTP::Post.new(uri, intercept_headers)
     post_back_proxy.set_form_data params
@@ -92,10 +92,10 @@ module AdyenRouter
   end
 
   def intercept_headers
-    { 
-      'VERSION' => env['HTTP_VERSION'], 
-      'AUTHORIZATION' => env['HTTP_AUTHORIZATION'], 
-      'USER_AGENT' => env['HTTP_USER_AGENT']
+    {
+      'VERSION'       => env['HTTP_VERSION'],
+      'AUTHORIZATION' => env['HTTP_AUTHORIZATION'],
+      'USER_AGENT'    => env['HTTP_USER_AGENT']
     }
   end
 

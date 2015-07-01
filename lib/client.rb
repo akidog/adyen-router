@@ -4,7 +4,7 @@ require 'net/http'
 require 'base64'
 
 module AdyenRouter
- 
+
     def self.configure(&block)
       @client = Client.new
       @client.instance_eval &block
@@ -13,16 +13,16 @@ module AdyenRouter
 
   class Client
 
-    attr_writer   :identity, :host, :port
-    attr_accessor :use_private_address, :remote_address
+    attr_writer   :machine_identity, :machine_host, :machine_port
+    attr_accessor :machine_use_private_address, :machine_post_path, :router_url
 
     def identity
-      @identity ||= Socket.gethostname
+      @machine_identity ||= Socket.gethostname
     end
 
     def host
-      if !@host.nil?
-        @host
+      if !@machine_host.nil?
+        @machine_host
       elsif local_network?
         Socket.ip_address_list.detect {|ip| ip.ipv4_private? }.ip_address
       else
@@ -31,7 +31,11 @@ module AdyenRouter
     end
 
     def port
-      @port ||= 3000
+      @machine_port ||= 3000
+    end
+
+    def post_path
+      @machine_post_path ||= 'adyen/post_back'
     end
 
     def local_network?
@@ -54,7 +58,7 @@ module AdyenRouter
       uri = URI("#{protocol}://#{remote_address}/publish")
 
       req = Net::HTTP::Post.new(uri)
-      req.set_form_data(machine: Base64.encode64("#{identity}|#{host}|#{port}"))
+      req.set_form_data(machine: Base64.encode64("#{identity}|#{host}|#{port}|#{post_path}"))
 
       res = Net::HTTP.start(uri.hostname, uri.port) do |http|
         http.request(req)
