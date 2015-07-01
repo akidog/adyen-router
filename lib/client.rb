@@ -39,7 +39,7 @@ module AdyenRouter
     end
 
     def local_network?
-      use_private_address
+      machine_use_private_address
     end
 
     def public_ip_address
@@ -52,10 +52,10 @@ module AdyenRouter
     end
 
     def publish
-      protocol = remote_address.scan(/(http):\/\/|(https):\/\//).flatten.compact.first
-      remote_address.gsub!(/http:\/\/|https:\/\//, '')
+      protocol = router_url.scan(/(http):\/\/|(https):\/\//).flatten.compact.first
+      router_url.gsub!(/http:\/\/|https:\/\//, '')
       protocol = "http" unless protocol
-      uri = URI("#{protocol}://#{remote_address}/publish")
+      uri = URI("#{protocol}://#{router_url}/publish")
 
       req = Net::HTTP::Post.new(uri)
       req.set_form_data(machine: Base64.encode64("#{identity}|#{host}|#{port}|#{post_path}"))
