@@ -11,6 +11,8 @@ require 'net/http'
 module AdyenRouter
   class Server < Sinatra::Base
 
+  set :bind, '0.0.0.0'
+
   @@clients = []
 
   helpers do
@@ -79,7 +81,7 @@ module AdyenRouter
   private
 
   def fetch_node(id)
-    halt = Proc.new { |id| [halt 500, "AdyenRouter - Node #{id} not found"] }
+    halt = Proc.new { |id| halt 500, "AdyenRouter - Node #{id} not found" }
     return @@clients.detect(halt.call(id)) { |n| n.id.eql?(id) }
   end
 
@@ -92,7 +94,7 @@ module AdyenRouter
   end
 
   # start the server if ruby file executed directly
-    run! if app_file == $0
+  #run! if app_file == $0
   end
 
 
