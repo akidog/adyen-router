@@ -2,7 +2,7 @@ adyen_router_path = File.dirname(__FILE__)
 $LOAD_PATH.unshift(adyen_router_path) unless $LOAD_PATH.include? adyen_router_path
 
 require 'adyen_router/version'
-require 'adyen_router/machine'
+require 'adyen_router/node'
 require 'yaml'
 require 'sinatra/base'
 require 'base64'
@@ -11,7 +11,7 @@ require 'net/http'
 module AdyenRouter
   class Server < Sinatra::Base
 
-  @@machines = []
+  @@clients = []
 
   helpers do
     def protected!
@@ -32,37 +32,32 @@ module AdyenRouter
     html = "<h1>Server settings</h1>"
     html += "<h2> Published Machines </h2>"
     html += "<ol>"
-    @@machines.each do |m|
-      html += "<li>name: #{m.name}<br>host: #{m.host}<br>port: #{m.port}<br> post_path: #{m.post_path} <br></li>"
+    @@clients.each do |m|
+      html += "<li>name: #{m.id}<br>host: #{m.host}<br>port: #{m.port}<br> post_path: #{m.post_path} <br></li>"
     end
     html += "</ol>"
     erb html
   end
 
   post '/publish' do
-    machine = AdyenRouter::Machine.new *::Base64::decode64(params[:machine]).split("|")
-    if @@machines.detect { |published_machine| published_machine.name.eql?(machine.name)}
-      @@machines.map! do |published_machine|
-        if published_machine.name.eql?(machine.name)
-          machine
-        else
-          published_machine
-        end
-      end
-    else
-      @@machines << machine
+    new_node = AdyenRouter::Node.new *::Base64::decode64(params[:node]).split("|")
+
+    @clients << new_node unless @clients.include?(new_node)
+    @clients.map do |node|
+      new_node if node.eql?(new_node)
     end
-    [200, {},"AdyenRouter: Yay! Notifications for #{machine.name} will be forward to #{machine.host}:#{machine.port}\n"]
+
+    [200, {},"AdyenRouter: Yay! Notifications for #{new_node.id} will be forward to #{new_node.id}:#{new_node.port}\n"]
   end
 
   post '/' do
 
     protected!
 
-    machine = fetch_machine(params[:merchantReference].scan(/[dev|test]-(.*)::/).flatten.first.to_s)
+    node = fetch_node(params[:merchantReference].scan(/[dev|test]-(.*)::/).flatten.first.to_s)
 
-    puts machine.inspect
-    uri = URI("http://#{machine.host}:#{machine.port}/#{machine.post_path}")
+    puts node.inspect
+    uri = URI("http://#{node.host}:#{node.port}/#{node.post_path}")
 
     post_back_proxy = ::Net::HTTP::Post.new(uri, intercept_headers)
     post_back_proxy.set_form_data params
@@ -83,12 +78,9 @@ module AdyenRouter
 
   private
 
-  def fetch_machine(name)
-    if machine = @@machines.detect { |m| m.name.eql?(name) }
-      return machine
-    else
-      halt 500, "AdyenRouter - machine #{name} not found"
-    end
+  def fetch_node(id)
+    halt = Proc.new { |id| [halt 500, "AdyenRouter - Node #{id} not found"] }
+    return @@clients.detect(halt.call(id)) { |n| n.id.eql?(id) }
   end
 
   def intercept_headers
