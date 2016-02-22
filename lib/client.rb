@@ -26,7 +26,7 @@ module AdyenRouter
     end
 
     def publish
-      url ~= /(http|https):\/\/.*/
+      url =~ /(http|https):\/\/.*/
       raise 'Enter FQDN ! Missing protocol, http or https?' unless $1
       @nodes.each do |node|
         uri = URI("#{url}/publish")
