@@ -3,21 +3,11 @@ module AdyenRouter
 
     attr_accessor :id, :host, :port, :post_path
 
-    def initialize(id, host, port=3000, post_path='adyen/post_back')
-      @id, @host, @port, @post_path = name, host, port, post_path
+    def initialize(id=Socket.gethostname, host=Node.public_ip_address, port=3000, post_path='adyen/post_back')
+      @id, @host, @port, @post_path = id, host, port, post_path
     end
 
-    def id
-      @id ||= Socket.gethostname
-    end
-
-    def host
-      @host ||= public_ip_address
-    end
-
-    private
-
-    def public_ip_address
+    def self.public_ip_address
       begin
         remote_ip = open('http://whatismyip.akamai.com').read
       rescue Exception => e
