@@ -44,8 +44,8 @@ module AdyenRouter
   post '/publish' do
     new_node = AdyenRouter::Node.new *::Base64::decode64(params[:node]).split("|")
 
-    @clients << new_node unless @clients.include?(new_node)
-    @clients.map do |node|
+    @@clients << new_node unless @@clients.include?(new_node)
+    @@clients.map do |node|
       new_node if node.eql?(new_node)
     end
 
