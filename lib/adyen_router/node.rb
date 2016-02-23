@@ -12,7 +12,7 @@ module AdyenRouter
     end
 
     def host
-      @host || Node.public_address
+      @host || Node.public_ip_address
     end
 
     def port
