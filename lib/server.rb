@@ -35,7 +35,7 @@ module AdyenRouter
     html += "<h2> Published Machines </h2>"
     html += "<ol>"
     @@clients.each do |m|
-      html += "<li>name: #{m.id}<br>host: #{m.host}<br>port: #{m.port}<br> post_path: #{m.post_path} <br></li>"
+      html += "<li>id: #{m.id}<br>host: #{m.host}<br>port: #{m.port}<br> post_path: #{m.post_path} <br></li>"
     end
     html += "</ol>"
     erb html
