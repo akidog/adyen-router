@@ -3,7 +3,7 @@ module AdyenRouter
 
     attr_writer :id, :host, :port, :post_path
 
-    def initialize(id, host, port, post_path)
+    def initialize(id=Socket.gethostname, host=Node.public_ip_address, port=3000, post_path='adyen/post_back')
       @id, @host, @port, @post_path = id, host, port, post_path
     end
 
